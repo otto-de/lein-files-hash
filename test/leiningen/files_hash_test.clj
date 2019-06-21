@@ -59,31 +59,40 @@
                 (.resolveSibling source n)
                 (into-array CopyOption [StandardCopyOption/REPLACE_EXISTING]))))
 
+(defn report-dir-state [dir]
+  (into {}
+        (for [f (file-seq (io/file dir))]
+          [(.getPath f) (if (.isDirectory f)
+                          :dir
+                          (slurp (.getPath f)))])))
+
 (deftest test-files-hash
   (let [test-dir "tmp/testdir"
         hashfile "tmp/test.hash"
         make-hash (fn []
                     (files-hash/files-hash {:files-hash {hashfile [test-dir]}})
-                    (slurp hashfile))
-        report-dir-state (fn [dir]
-                           )]
+                    (slurp hashfile))]
     (dotimes [n 50]
       (with-random-tree test-dir
         (testing "creates a valid hash file"
           (let [hash (make-hash)]
-            (is (= 64 (count hash)))
+            (is (= 64 (count hash))
+                (str (report-dir-state test-dir)))
             (is (every? int?
                         (mapv #(Integer/parseInt (subs hash % (+ % 2)) 16)
-                              (mapv (partial * 2) (range 32)))))))
+                              (mapv (partial * 2) (range 32))))
+                (str (report-dir-state test-dir)))))
         (testing "hashing again gives the same result"
-          (is (= (make-hash) (make-hash))))
+          (is (= (make-hash) (make-hash))
+              (str (report-dir-state test-dir))))
         (testing "modifying a file name changes the hash"
           (let [hash-before (make-hash)
                 files (rest (file-seq (io/file test-dir)))]
             (when (not-empty files)
               (let [f (rand-nth files)]
                 (rename-file f (change-random-char (.getName f)))
-                (is (not= hash-before (make-hash)))))))
+                (is (not= hash-before (make-hash))
+                    (str (report-dir-state test-dir)))))))
         (testing "modifying file content changes the hash"
           (let [hash-before (make-hash)
                 files (->> (file-seq (io/file test-dir))
@@ -91,5 +100,6 @@
             (when (not-empty files)
               (let [f (rand-nth files)]
                 (spit f (change-random-char (slurp f)))
-                (is (not= hash-before (make-hash))))))))
+                (is (not= hash-before (make-hash))
+                    (str (report-dir-state test-dir))))))))
       (delete-dir "tmp"))))
