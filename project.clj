@@ -1,4 +1,4 @@
-(defproject lein-files-hash "0.1.1"
+(defproject lein-files-hash "0.1.2-SNAPSHOT"
   :description "A Leiningen plugin to save hash trees of files and directories to other files."
   :url "https://github.com/otto-ec/nav_lein-files-hash"
   :license {:name "EPL-2.0 OR GPL-2.0-or-later WITH Classpath-exception-2.0"
