@@ -1,9 +1,12 @@
 (ns leiningen.files-hash-test
   (:require [clojure.java.io :as io]
+            [clojure.string :as string]
             [clojure.test :refer [deftest is testing]]
             [clojure.test.check.generators :as gen]
-            [leiningen.files-hash :as files-hash])
-  (:import [java.nio.file CopyOption Files Paths StandardCopyOption]))
+            [leiningen.files-hash :as files-hash]
+            [leiningen.files-hash.props :as props])
+  (:import [java.nio.file CopyOption Files Paths StandardCopyOption]
+           [java.util Properties]))
 
 (defn gen-1 [g]
   (first (gen/sample g 1)))
@@ -68,16 +71,21 @@
 
 (deftest test-files-hash
   (let [test-dir "tmp/testdir"
-        hashfile "tmp/test.hash"
+        propfile "tmp/test.properties"
+        property-key "testdir-hash"
         make-hash (fn []
-                    (files-hash/files-hash {:files-hash {hashfile [test-dir]}})
-                    (slurp hashfile))]
+                    (files-hash/files-hash {:files-hash [{:properties-file propfile
+                                                          :property-key property-key
+                                                          :paths [test-dir]}]})
+                    (-> (props/load-props propfile)
+                        (get property-key)))]
     (dotimes [n 50]
       (with-random-tree test-dir
         (testing "creates a valid hash file"
           (let [hash (make-hash)]
             (is (= 64 (count hash))
-                (str (report-dir-state test-dir)))
+                {:dir-state (str (report-dir-state test-dir))
+                 :hash hash})
             (is (every? int?
                         (mapv #(Integer/parseInt (subs hash % (+ % 2)) 16)
                               (mapv (partial * 2) (range 32))))
@@ -101,5 +109,9 @@
               (let [f (rand-nth files)]
                 (spit f (change-random-char (slurp f)))
                 (is (not= hash-before (make-hash))
-                    (str (report-dir-state test-dir))))))))
+                    (str (report-dir-state test-dir)))))))
+        (testing "an existing properties file doesn't lose other keys"
+          (props/store-props {"foo" "bar"} propfile :comment "test")
+          (is (= 64 (count (make-hash))))
+          (is (= "bar" (get (props/load-props propfile) "foo")))))
       (delete-dir "tmp"))))

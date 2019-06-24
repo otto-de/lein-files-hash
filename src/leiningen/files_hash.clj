@@ -1,14 +1,16 @@
 (ns leiningen.files-hash
   (:import [java.io File]
-           [java.security MessageDigest]))
+           [java.security MessageDigest])
+  (:require [clojure.java.io :as io]
+            [leiningen.files-hash.props :as props]))
 
 (defn type-key [thing]
   (cond (string? thing) :string
         (bytes? thing) :bytes
         (vector? thing) :vector
-        (instance? java.io.File thing) (if (.isDirectory thing)
-                                         :directory
-                                         :file)))
+        (instance? File thing) (if (.isDirectory thing)
+                                 :directory
+                                 :file)))
 
 (defmulti sha256hash type-key)
 
@@ -58,5 +60,8 @@
     :files-hash {\"resources/graph-relevant.hash\" [\"src/de/otto/nav/graph\"
                                                   \"src/de/otto/nav/feed\"]}"
   [{:keys [files-hash] :as project} & args]
-  (doseq [[hashfile pathnames] files-hash]
-    (spit hashfile (hash-paths pathnames))))
+  (doseq [{:keys [properties-file property-key paths]} files-hash]
+    (let [props (props/load-props properties-file)]
+      (-> props
+          (assoc property-key (hash-paths paths))
+          (props/store-props properties-file :comment "Written by lein-files-hash.")))))
