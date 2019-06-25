@@ -5,7 +5,7 @@ files.
 
 ## Usage
 
-Put `[lein-files-hash "0.2.2"]` into the `:plugins` vector of your project.clj.
+Put `[de.otto/lein-files-hash "0.2.3"]` into the `:plugins` vector of your project.clj.
 
 Configure what should be hashed and saved where:
 
