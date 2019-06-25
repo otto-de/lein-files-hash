@@ -5,7 +5,9 @@ files.
 
 ## Usage
 
-Put `[de.otto/lein-files-hash "0.2.3"]` into the `:plugins` vector of your project.clj.
+Add the dependency to the `:plugins` vector of your project.clj:
+
+[![Clojars Project](http://clojars.org/de.otto/lein-files-hash/latest-version.svg)](http://clojars.org/de.otto/lein-files-hash)
 
 Configure what should be hashed and saved where:
 
