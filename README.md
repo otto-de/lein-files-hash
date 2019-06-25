@@ -10,10 +10,10 @@ Put `[de.otto/lein-files-hash "0.2.3"]` into the `:plugins` vector of your proje
 Configure what should be hashed and saved where:
 
 ```
-:files-hash [{:properties-file \"resources/versions.properties\"
-              :property-key \"graph-hash\"
-              :paths [\"src/de/otto/nav/graph\"
-                      \"src/de/otto/nav/feed\"]}]
+  :files-hash [{:properties-file "resources/versions.properties"
+                :property-key "graph-hash"
+                :paths ["src/de/otto/nav/graph"
+                        "src/de/otto/nav/feed"]}]
 ```
 
 This will then on invocation create a SHA-256 Merkle hash tree of all files and
