@@ -14,8 +14,8 @@ Configure what should be hashed and saved where:
 ```
   :files-hash [{:properties-file "resources/versions.properties"
                 :property-key "graph-hash"
-                :paths ["src/de/otto/nav/package1"
-                        "src/de/otto/nav/package2"]}]
+                :paths ["src/de/otto/package1"
+                        "src/de/otto/package2"]}]
 ```
 
 This will then on invocation create a SHA-256 Merkle hash tree of all files and
