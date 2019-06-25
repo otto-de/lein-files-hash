@@ -1,6 +1,6 @@
-(defproject lein-files-hash "0.2.1-SNAPSHOT"
+(defproject de.otto/lein-files-hash "0.2.1"
   :description "A Leiningen plugin to save hash trees of files and directories to other files."
-  :url "https://github.com/otto-ec/nav_lein-files-hash"
+  :url "https://github.com/otto-de/lein-files-hash"
   :license {:name "Apache License 2.0"
             :url  "http://www.apache.org/license/LICENSE-2.0.html"}
   :eval-in-leiningen true
