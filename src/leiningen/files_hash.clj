@@ -2,6 +2,8 @@
   (:import [java.io File]
            [java.security MessageDigest])
   (:require [clojure.java.io :as io]
+            [clojure.spec.alpha :as spec]
+            [leiningen.core.main :as main]
             [leiningen.files-hash.props :as props]))
 
 (defn type-key [thing]
@@ -51,6 +53,12 @@
        sha256hash
        hex))
 
+(spec/def ::properties-file string?)
+(spec/def ::property-key string?)
+(spec/def ::paths (spec/coll-of string?))
+(spec/def ::config (spec/keys :req-un [::properties-file ::property-key ::paths]))
+(spec/def ::configs (spec/coll-of ::config))
+
 (defn files-hash
   "Writes a SHA-256 Merkle tree of some file trees to a properties-file property.
 
@@ -61,8 +69,12 @@
                   :paths [\"src/de/otto/nav/graph\"
                           \"src/de/otto/nav/feed\"]}]"
   [{:keys [files-hash] :as project} & args]
-  (doseq [{:keys [properties-file property-key paths]} files-hash]
-    (let [props (props/load-props properties-file)]
-      (-> props
-          (assoc property-key (hash-paths paths))
-          (props/store-props properties-file :comment "Written by lein-files-hash.")))))
+  (if (spec/valid? ::configs files-hash)
+    (doseq [{:keys [properties-file property-key paths]} files-hash]
+      (let [props (props/load-props properties-file)]
+        (-> props
+            (assoc property-key (hash-paths paths))
+            (props/store-props properties-file :comment "Last written by lein-files-hash."))))
+    (do (spec/explain ::configs files-hash)
+        (flush)
+        (main/abort "Invalid configuration for files-hash"))))
