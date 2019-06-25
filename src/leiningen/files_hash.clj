@@ -52,13 +52,14 @@
        hex))
 
 (defn files-hash
-  "Given a map of a filename to a vector of pathnames, writes to that named file
-  a SHA-256 Merkle tree of all files and their names found under those pathnames.
+  "Writes a SHA-256 Merkle tree of some file trees to a properties-file property.
 
   Example configuration in project.clj:
 
-    :files-hash {\"resources/graph-relevant.hash\" [\"src/de/otto/nav/graph\"
-                                                  \"src/de/otto/nav/feed\"]}"
+    :files-hash [{:properties-file \"resources/versions.properties\"
+                  :property-key \"graph-hash\"
+                  :paths [\"src/de/otto/nav/graph\"
+                          \"src/de/otto/nav/feed\"]}]"
   [{:keys [files-hash] :as project} & args]
   (doseq [{:keys [properties-file property-key paths]} files-hash]
     (let [props (props/load-props properties-file)]
