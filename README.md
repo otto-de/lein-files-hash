@@ -24,6 +24,10 @@ key in the given properties file.  As the format hints, you can have multiple
 such configurations.  You can also refer to single file names in the paths
 vector.
 
+The properties file is read and written through `java.util.Properties` (_not_
+`org.apache.commons.configuration.PropertiesConfiguration`!).  This means that
+comments are clobbered and in the case of duplicate keys, the last one wins.
+
 Call from shell:
 
     $ lein files-hash

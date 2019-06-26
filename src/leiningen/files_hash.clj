@@ -66,15 +66,15 @@
 
     :files-hash [{:properties-file \"resources/versions.properties\"
                   :property-key \"graph-hash\"
-                  :paths [\"src/de/otto/nav/graph\"
-                          \"src/de/otto/nav/feed\"]}]"
-  [{:keys [files-hash] :as project} & args]
-  (if (spec/valid? ::configs files-hash)
-    (doseq [{:keys [properties-file property-key paths]} files-hash]
+                  :paths [\"src/de/otto/some-package\"
+                          \"src/de/otto/some-other-package\"]}]"
+  [{configs :files-hash} & args]
+  (if (spec/valid? ::configs configs)
+    (doseq [{:keys [properties-file property-key paths]} configs]
       (let [props (props/load-props properties-file)]
         (-> props
             (assoc property-key (hash-paths paths))
             (props/store-props properties-file :comment "Last written by lein-files-hash."))))
-    (do (spec/explain ::configs files-hash)
+    (do (spec/explain ::configs configs)
         (flush)
         (main/abort "Invalid configuration for files-hash"))))
