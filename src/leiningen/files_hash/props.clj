@@ -14,5 +14,8 @@
   (let [props (Properties.)]
     (doseq [[k v] m]
       (.setProperty props k v))
+    (-> (io/file filename)
+        (.getParentFile)
+        (.mkdirs))
     (with-open [w (io/writer filename :append append?)]
       (.store props w comment))))
