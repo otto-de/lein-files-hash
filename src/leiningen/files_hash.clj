@@ -1,8 +1,7 @@
 (ns leiningen.files-hash
   (:import [java.io File]
            [java.security MessageDigest])
-  (:require [clojure.java.io :as io]
-            [clojure.spec.alpha :as spec]
+  (:require [clojure.spec.alpha :as spec]
             [leiningen.core.main :as main]
             [leiningen.files-hash.props :as props]))
 
@@ -39,7 +38,7 @@
 
 (defmethod sha256hash :directory [^File d]
   (sha256hash (into [(.getName d)]
-                    (.listFiles d))))
+                    (sort (.listFiles d)))))
 
 (defn hex [bytes]
   (->> bytes
