@@ -27,11 +27,17 @@
 (defmethod sha256hash :vector [v]
   (sha256hash (byte-array (mapcat sha256hash v))))
 
-(defmethod sha256hash :file [f]
-  (sha256hash [(.getName f)
-               (slurp f :encoding "UTF-8")]))
+(defn file->bytes [^File f]
+  (with-open [is (java.io.FileInputStream. f)]
+    (let [ary (byte-array (.length f))]
+      (.read is ary)
+      ary)))
 
-(defmethod sha256hash :directory [d]
+(defmethod sha256hash :file [^File f]
+  (sha256hash [(.getName f)
+               (file->bytes f)]))
+
+(defmethod sha256hash :directory [^File d]
   (sha256hash (into [(.getName d)]
                     (.listFiles d))))
 
