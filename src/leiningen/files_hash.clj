@@ -1,5 +1,6 @@
 (ns leiningen.files-hash
-  (:import [java.security MessageDigest])
+  (:import [java.io File]
+           [java.security MessageDigest])
   (:require [clojure.java.io :as io]
             [clojure.spec.alpha :as spec]
             [leiningen.core.main :as main]
