@@ -72,7 +72,8 @@
 (spec/def ::property-key string?)
 (spec/def ::paths (spec/coll-of string?))
 (spec/def ::deps (spec/coll-of string?))
-(spec/def ::config (spec/keys :req-un [::properties-file ::property-key ::paths ::deps]))
+(spec/def ::config (spec/keys :req-un [::properties-file ::property-key]
+                              :opt-un [::paths ::deps]))
 (spec/def ::configs (spec/coll-of ::config))
 
 (defn files-hash
