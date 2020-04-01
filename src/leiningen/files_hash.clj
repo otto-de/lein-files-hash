@@ -50,15 +50,17 @@
        (into-array Byte/TYPE)))
 
 (defn path->hashable [paths]
-  (->> paths
-       (mapv io/file)))
+  (->> (mapv io/file paths)
+       (sort)))
 
 (defn deps->hashable [deps]
   (let [deps-set (set deps)]
     (->> (mapv (fn [[name version]]
-                 [(str name) (str version)]) (:dependencies (project/read)))
+                 [(str name) (str version)])
+               (:dependencies (project/read)))
          (filterv (fn [[name]] (contains? deps-set name)))
-         (mapv (partial str/join ":")))))
+         (mapv (partial str/join ":"))
+         (sort))))
 
 (defn hash [& args]
   (->> (apply concat args)

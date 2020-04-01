@@ -5,8 +5,7 @@
             [leiningen.files-hash :as files-hash]
             [leiningen.files-hash.props :as props]
             [leiningen.core.project :as project])
-  (:import [java.nio.file CopyOption Files Paths StandardCopyOption]
-           [java.util Properties]))
+  (:import [java.nio.file CopyOption Files Paths StandardCopyOption]))
 
 (defn gen-1 [g]
   (first (gen/sample g 1)))
@@ -72,7 +71,7 @@
 (deftest deps->hashable-test
   (is (= ["org.clojure/clojure:1.10.1"]
          (files-hash/deps->hashable ["org.clojure/clojure"])))
-  (is (= ["org.clojure/clojure:1.10.1" "nrepl/nrepl:0.6.0"]
+  (is (= ["nrepl/nrepl:0.6.0" "org.clojure/clojure:1.10.1"]
          (files-hash/deps->hashable ["org.clojure/clojure" "nrepl/nrepl"]))))
 
 (deftest files-hash-test
