@@ -14,13 +14,16 @@ Configure what should be hashed and saved where:
 ```
   :files-hash [{:properties-file "resources/versions.properties"
                 :property-key "graph-hash"
+                :deps  ["org.some.dependency/dependency"
+                        "org.some.other.dependency/other-dependency"]
                 :paths ["src/de/otto/package1"
                         "src/de/otto/package2"]}]
 ```
 
-This will then on invocation create a SHA-256 Merkle hash tree of all files and
-their names under the given paths and save the resulting hash under the given
-key in the given properties file.  As the format hints, you can have multiple
+This will then on invocation create a SHA-256 Merkle hash tree of all files 
+(using filenames under the given paths) and dependencies (using dependency names and 
+the corresponding version). The resulting hash is stored under the given
+key in the given properties file. As the format hints, you can have multiple
 such configurations.  You can also refer to single file names in the paths
 vector.
 

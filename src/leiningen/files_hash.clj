@@ -4,7 +4,9 @@
   (:require [clojure.java.io :as io]
             [clojure.spec.alpha :as spec]
             [leiningen.core.main :as main]
-            [leiningen.files-hash.props :as props]))
+            [leiningen.core.project :as project]
+            [leiningen.files-hash.props :as props]
+            [clojure.string :as str]))
 
 (defn type-key [thing]
   (cond (string? thing) :string
@@ -47,16 +49,28 @@
        (mapv #(Byte/parseByte % 16))
        (into-array Byte/TYPE)))
 
-(defn hash-paths [paths]
+(defn path->hashable [paths]
   (->> paths
-       (mapv io/file)
+       (mapv io/file)))
+
+(defn deps->hashable [deps]
+  (let [deps-set (set deps)]
+    (->> (mapv (fn [[name version]]
+                 [(str name) (str version)]) (:dependencies (project/read)))
+         (filterv (fn [[name]] (contains? deps-set name)))
+         (mapv (partial str/join ":")))))
+
+(defn hash [& args]
+  (->> (apply concat args)
+       vec
        sha256hash
        hex))
 
 (spec/def ::properties-file string?)
 (spec/def ::property-key string?)
 (spec/def ::paths (spec/coll-of string?))
-(spec/def ::config (spec/keys :req-un [::properties-file ::property-key ::paths]))
+(spec/def ::deps (spec/coll-of string?))
+(spec/def ::config (spec/keys :req-un [::properties-file ::property-key ::paths ::deps]))
 (spec/def ::configs (spec/coll-of ::config))
 
 (defn files-hash
@@ -66,14 +80,16 @@
 
     :files-hash [{:properties-file \"resources/versions.properties\"
                   :property-key \"graph-hash\"
+                  :deps  [\"org.some.dependency/dependency\"
+                          \"org.some.other.dependency/other-dependency\"]
                   :paths [\"src/de/otto/some-package\"
                           \"src/de/otto/some-other-package\"]}]"
   [{configs :files-hash} & args]
   (if (spec/valid? ::configs configs)
-    (doseq [{:keys [properties-file property-key paths]} configs]
+    (doseq [{:keys [properties-file property-key paths deps]} configs]
       (let [props (props/load-props properties-file)]
         (-> props
-            (assoc property-key (hash-paths paths))
+            (assoc property-key (hash (path->hashable paths) (deps->hashable deps)))
             (props/store-props properties-file :comment "Last written by lein-files-hash."))))
     (do (spec/explain ::configs configs)
         (flush)
