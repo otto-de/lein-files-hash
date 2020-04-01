@@ -1,12 +1,11 @@
 (ns leiningen.files-hash-test
   (:require [clojure.java.io :as io]
-            [clojure.string :as string]
             [clojure.test :refer [deftest is testing]]
             [clojure.test.check.generators :as gen]
             [leiningen.files-hash :as files-hash]
-            [leiningen.files-hash.props :as props])
-  (:import [java.nio.file CopyOption Files Paths StandardCopyOption]
-           [java.util Properties]))
+            [leiningen.files-hash.props :as props]
+            [leiningen.core.project :as project])
+  (:import [java.nio.file CopyOption Files Paths StandardCopyOption]))
 
 (defn gen-1 [g]
   (first (gen/sample g 1)))
@@ -69,49 +68,61 @@
                           :dir
                           (slurp (.getPath f)))])))
 
-(deftest test-files-hash
+(deftest deps->hashable-test
+  (is (= ["org.clojure/clojure:1.10.1"]
+         (files-hash/deps->hashable ["org.clojure/clojure"])))
+  (is (= ["nrepl/nrepl:0.6.0" "org.clojure/clojure:1.10.1"]
+         (files-hash/deps->hashable ["org.clojure/clojure" "nrepl/nrepl"]))))
+
+(deftest files-hash-test
   (let [test-dir "tmp/testdir"
         propfile "tmp/test.properties"
         property-key "testdir-hash"
+        deps ["org.clojure/clojure"]
         make-hash (fn []
                     (files-hash/files-hash {:files-hash [{:properties-file propfile
-                                                          :property-key property-key
-                                                          :paths [test-dir]}]})
+                                                          :property-key    property-key
+                                                          :deps            deps
+                                                          :paths           [test-dir]}]})
                     (-> (props/load-props propfile)
                         (get property-key)))]
     (dotimes [n 50]
       (with-random-tree test-dir
-        (testing "creates a valid hash file"
-          (let [hash (make-hash)]
-            (is (= 64 (count hash))
-                {:dir-state (str (report-dir-state test-dir))
-                 :hash hash})
-            (is (every? int?
-                        (mapv #(Integer/parseInt (subs hash % (+ % 2)) 16)
-                              (mapv (partial * 2) (range 32))))
-                (str (report-dir-state test-dir)))))
-        (testing "hashing again gives the same result"
-          (is (= (make-hash) (make-hash))
-              (str (report-dir-state test-dir))))
-        (testing "modifying a file name changes the hash"
-          (let [hash-before (make-hash)
-                files (rest (file-seq (io/file test-dir)))]
-            (when (not-empty files)
-              (let [f (rand-nth files)]
-                (rename-file f (change-random-char (.getName f)))
-                (is (not= hash-before (make-hash))
-                    (str (report-dir-state test-dir)))))))
-        (testing "modifying file content changes the hash"
-          (let [hash-before (make-hash)
-                files (->> (file-seq (io/file test-dir))
-                           (remove #(.isDirectory %)))]
-            (when (not-empty files)
-              (let [f (rand-nth files)]
-                (spit f (change-random-char (slurp f)))
-                (is (not= hash-before (make-hash))
-                    (str (report-dir-state test-dir)))))))
-        (testing "an existing properties file doesn't lose other keys"
-          (props/store-props {"foo" "bar"} propfile :comment "test")
-          (is (= 64 (count (make-hash))))
-          (is (= "bar" (get (props/load-props propfile) "foo")))))
+                        (testing "creates a valid hash file"
+                          (let [hash (make-hash)]
+                            (is (= 64 (count hash))
+                                {:dir-state (str (report-dir-state test-dir))
+                                 :hash      hash})
+                            (is (every? int?
+                                        (mapv #(Integer/parseInt (subs hash % (+ % 2)) 16)
+                                              (mapv (partial * 2) (range 32))))
+                                (str (report-dir-state test-dir)))))
+                        (testing "hashing again gives the same result"
+                          (is (= (make-hash) (make-hash))
+                              (str (report-dir-state test-dir))))
+                        (testing "modifying a file name changes the hash"
+                          (let [hash-before (make-hash)
+                                files (rest (file-seq (io/file test-dir)))]
+                            (when (not-empty files)
+                              (let [f (rand-nth files)]
+                                (rename-file f (change-random-char (.getName f)))
+                                (is (not= hash-before (make-hash))
+                                    (str (report-dir-state test-dir)))))))
+                        (testing "modifying file content changes the hash"
+                          (let [hash-before (make-hash)
+                                files (->> (file-seq (io/file test-dir))
+                                           (remove #(.isDirectory %)))]
+                            (when (not-empty files)
+                              (let [f (rand-nth files)]
+                                (spit f (change-random-char (slurp f)))
+                                (is (not= hash-before (make-hash))
+                                    (str (report-dir-state test-dir)))))))
+                        (testing "modifying dependency version changes the hash"
+                          (with-redefs [project/read (fn [] {:dependencies [["org.clojure/clojure" (str (rand))]]})]
+                            (let [hash-before (make-hash)]
+                              (is (not= hash-before (make-hash))))))
+                        (testing "an existing properties file doesn't lose other keys"
+                          (props/store-props {"foo" "bar"} propfile :comment "test")
+                          (is (= 64 (count (make-hash))))
+                          (is (= "bar" (get (props/load-props propfile) "foo")))))
       (delete-dir "tmp"))))
