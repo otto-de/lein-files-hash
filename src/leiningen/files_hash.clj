@@ -66,7 +66,7 @@
                (set deps))
          (sort))))
 
-(defn hash [& args]
+(defn make-hash [& args]
   (->> (apply concat args)
        vec
        sha256hash
@@ -96,7 +96,7 @@
     (doseq [{:keys [properties-file property-key paths deps]} configs]
       (let [props (props/load-props properties-file)]
         (-> props
-            (assoc property-key (hash (path->hashable paths) (deps->hashable deps)))
+            (assoc property-key (make-hash (path->hashable paths) (deps->hashable deps)))
             (props/store-props properties-file :comment "Last written by lein-files-hash."))))
     (do (spec/explain ::configs configs)
         (flush)
