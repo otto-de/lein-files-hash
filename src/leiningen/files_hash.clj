@@ -1,5 +1,5 @@
 (ns leiningen.files-hash
-  (:import [java.io File]
+  (:import [java.io File FileNotFoundException]
            [java.security MessageDigest])
   (:require [clojure.java.io :as io]
             [clojure.spec.alpha :as spec]
@@ -54,15 +54,19 @@
        (sort)))
 
 (defn deps->hashable [deps]
-  (let [deps-set (set deps)]
-    (->> (mapv (fn [[name version]]
-                 [(str name) (str version)])
-               (:dependencies (project/read)))
-         (filterv (fn [[name]] (contains? deps-set name)))
-         (mapv (partial str/join ":"))
+  (let [project (reduce (fn [acc [name version]]
+                          (assoc acc (str name) (str name ":" version)))
+                        {}
+                        (:dependencies (project/read)))]
+    (->> (mapv (fn [d]
+                 (if-let [found-dep (get project d)]
+                   found-dep
+                   (throw (new FileNotFoundException
+                               (str d " not found (dependency not found in project :dependencies)")))))
+               (set deps))
          (sort))))
 
-(defn hash [& args]
+(defn make-hash [& args]
   (->> (apply concat args)
        vec
        sha256hash
@@ -92,7 +96,7 @@
     (doseq [{:keys [properties-file property-key paths deps]} configs]
       (let [props (props/load-props properties-file)]
         (-> props
-            (assoc property-key (hash (path->hashable paths) (deps->hashable deps)))
+            (assoc property-key (make-hash (path->hashable paths) (deps->hashable deps)))
             (props/store-props properties-file :comment "Last written by lein-files-hash."))))
     (do (spec/explain ::configs configs)
         (flush)
