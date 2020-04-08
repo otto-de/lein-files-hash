@@ -5,7 +5,8 @@
             [leiningen.files-hash :as files-hash]
             [leiningen.files-hash.props :as props]
             [leiningen.core.project :as project])
-  (:import [java.nio.file CopyOption Files Paths StandardCopyOption]))
+  (:import [java.nio.file CopyOption Files Paths StandardCopyOption]
+           (java.io FileNotFoundException)))
 
 (defn gen-1 [g]
   (first (gen/sample g 1)))
@@ -72,7 +73,8 @@
   (is (= ["org.clojure/clojure:1.10.1"]
          (files-hash/deps->hashable ["org.clojure/clojure"])))
   (is (= ["nrepl/nrepl:0.6.0" "org.clojure/clojure:1.10.1"]
-         (files-hash/deps->hashable ["org.clojure/clojure" "nrepl/nrepl"]))))
+         (files-hash/deps->hashable ["org.clojure/clojure" "nrepl/nrepl"])))
+  (is (thrown? FileNotFoundException (files-hash/deps->hashable ["not/existing"]))))
 
 (deftest files-hash-test
   (let [test-dir "tmp/testdir"

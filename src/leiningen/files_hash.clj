@@ -1,5 +1,5 @@
 (ns leiningen.files-hash
-  (:import [java.io File]
+  (:import [java.io File FileNotFoundException]
            [java.security MessageDigest])
   (:require [clojure.java.io :as io]
             [clojure.spec.alpha :as spec]
@@ -54,12 +54,16 @@
        (sort)))
 
 (defn deps->hashable [deps]
-  (let [deps-set (set deps)]
-    (->> (mapv (fn [[name version]]
-                 [(str name) (str version)])
-               (:dependencies (project/read)))
-         (filterv (fn [[name]] (contains? deps-set name)))
-         (mapv (partial str/join ":"))
+  (let [project (reduce (fn [acc [name version]]
+                          (assoc acc (str name) (str name ":" version)))
+                        {}
+                        (:dependencies (project/read)))]
+    (->> (mapv (fn [d]
+                 (if-let [found-dep (get project d)]
+                   found-dep
+                   (throw (new FileNotFoundException
+                               (str d " not found (dependency not found in project :dependencies)")))))
+               (set deps))
          (sort))))
 
 (defn hash [& args]
