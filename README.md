@@ -39,9 +39,18 @@ You might want to do this in your project's build aliases:
 
     :aliases {"uberjar" ["do" ["clean"] ["files-hash"] "uberjar"]}
 
+## Maintainers
+
+See [MAINTAINERS](MAINTAINERS).
+
+## Lifecyle status
+
+See [OSSMETADATA](OSSMETADATA).
+
 ## License
 
 Copyright © 2019 OTTO GmbH & Co. KG
 
 This program and the accompanying materials are made available under the terms
-of the Apache License 2.0, see https://www.apache.org/licenses/LICENSE-2.0.html
+of the Apache License 2.0, see the [LICENSE file](LICENSE) or
+https://www.apache.org/licenses/LICENSE-2.0.html
